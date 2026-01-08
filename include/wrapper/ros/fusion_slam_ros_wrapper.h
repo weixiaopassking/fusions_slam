@@ -40,6 +40,7 @@ class FusionSlamFrontWrapper
         ros::Publisher pathPub;
         ros::Publisher rtkPathPub;
         ros::Publisher localMapPub;
+        ros::Publisher lioOdomPub;
 
         void lidarCloudMsgCallBack(const sensor_msgs::PointCloud2Ptr &msg);
         void imuMsgCallBack(const sensor_msgs::ImuPtr &msg);

@@ -56,6 +56,7 @@ FusionSlamFrontWrapper::FusionSlamFrontWrapper(ros::NodeHandle &nh, const std::s
     pathPub = nh.advertise<nav_msgs::Path>("path", 100);
     rtkPathPub = nh.advertise<nav_msgs::Path>("rtk_path", 100);
     localMapPub = nh.advertise<sensor_msgs::PointCloud2>("local_map", 100);
+    lioOdomPub = nh.advertise<nav_msgs::Odometry>("lio_odom", 100);
     gpsInitSuccess = false;
 
     LOG(INFO) <<"\033[1;32m"<< "wrapper: " << "\033[0m" << std::endl;
@@ -280,6 +281,17 @@ void FusionSlamFrontWrapper::publishMsg(){
         psd.pose.position.z = X.position.z();
         path.poses.emplace_back(psd);
         pathPub.publish(path);
+        nav_msgs::Odometry lioOdom;
+        lioOdom.header.frame_id = "map";
+        lioOdom.header.stamp.fromSec(ts);
+        lioOdom.pose.pose.position.x = X.position.x();
+        lioOdom.pose.pose.position.y = X.position.y();
+        lioOdom.pose.pose.position.z = X.position.z();
+        lioOdom.pose.pose.orientation.x = X.rotation.x();
+        lioOdom.pose.pose.orientation.y = X.rotation.y();
+        lioOdom.pose.pose.orientation.z = X.rotation.z();
+        lioOdom.pose.pose.orientation.w = X.rotation.w();
+        lioOdomPub.publish(lioOdom);
         Eigen::Vector3d rpy = Eigen::Vector3d::Zero();
         q2rpy(X.rotation, rpy);
         if(savePose){

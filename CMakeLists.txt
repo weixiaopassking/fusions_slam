@@ -17,6 +17,7 @@ add_definitions(-DMP_EN)
 add_definitions(-DMP_PROC_NUM=6)
 
 find_package(OpenMP QUIET)
+find_package(Ceres REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -36,6 +37,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   ${YAML_CPP_INCLUDEDIR}
+  ${CERES_INCLUDE_DIRS}
 )
 set(IESKF_FILE
     src/fusion_slam/modules/ieskf/ieskf.cpp
@@ -51,6 +53,12 @@ set(WRAPPER_FILE
     src/wrapper/ros/fusion_slam_ros_wrapper.cpp
     src/wrapper/ros/imu_process/imu_process.cpp
 )
+
+set(BACK_FILE
+  src/fusion_slam/modules/back/back.cpp
+  src/fusion_slam/modules/back/lio_gps_opt.cpp
+)
+
 set(LOC_FILE
     src/app/location_node.cpp
     src/wrapper/ros/location_ros_wrapper.cpp
@@ -63,6 +71,25 @@ set(LOC_FILE
     src/fusion_slam/modules/sensors/rtk/rtk_switch.cpp
     src/fusion_slam/math/math.cpp
 )
+
+add_library(${PROJECT_NAME}_back_lib
+              ${BACK_FILE}
+              )
+
+add_executable(${PROJECT_NAME}_back_node
+              src/app/back_node.cpp
+              src/wrapper/ros/back_ros_wrapper.cpp
+              )
+target_link_libraries(${PROJECT_NAME}_back_node
+  PRIVATE OpenMP::OpenMP_CXX
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${YAML_CPP_LIBRARIES}
+  ${PROJECT_NAME}_back_lib
+  ${CERES_LIBRARIES}
+  glog
+)
+
 add_executable(${PROJECT_NAME}_node
               ${WRAPPER_FILE}
               ${IESKF_FILE}
@@ -86,6 +113,6 @@ target_link_libraries(location_node
   glog
 )
 
-set_target_properties(${PROJECT_NAME}_node location_node PROPERTIES
+set_target_properties(${PROJECT_NAME}_node location_node ${PROJECT_NAME}_back_node PROPERTIES
                       RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin
                      )
